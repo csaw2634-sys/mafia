@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>마피아 — 밤이 오면</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@600;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="phase-lobby">
+
+  <!-- 첫 화면 -->
+  <div id="home" class="screen home">
+    <div class="home-card">
+      <div class="moon" aria-hidden="true"></div>
+      <h1>마피아</h1>
+      <p class="tagline">밤이 오면, 누군가 사라진다.</p>
+
+      <label class="field">
+        <span>닉네임</span>
+        <input id="nameInput" maxlength="10" placeholder="최대 10자" autocomplete="off">
+      </label>
+      <button id="createBtn" class="btn primary wide">새 방 만들기</button>
+
+      <div class="or"><span>또는 친구 방에 들어가기</span></div>
+
+      <div class="join-row">
+        <input id="codeInput" maxlength="4" placeholder="방 코드 4자리" autocomplete="off">
+        <button id="joinBtn" class="btn">입장</button>
+      </div>
+      <p class="hint">4명부터 10명까지 함께할 수 있어요. 사회자는 컴퓨터가 맡습니다.</p>
+    </div>
+  </div>
+
+  <!-- 게임 화면 -->
+  <div id="game" class="screen game hidden">
+    <header class="topbar">
+      <button id="codeBtn" class="code-btn" title="코드 복사">
+        <span class="code-label">방 코드</span>
+        <span id="codeText" class="code-text"></span>
+      </button>
+      <button id="leaveBtn" class="btn ghost small">나가기</button>
+    </header>
+
+    <main class="layout">
+      <section class="board">
+        <div class="sky">
+          <div class="dial">
+            <svg viewBox="0 0 120 120" aria-hidden="true">
+              <circle class="dial-track" cx="60" cy="60" r="54"></circle>
+              <circle id="dialRing" class="dial-ring" cx="60" cy="60" r="54"></circle>
+            </svg>
+            <div class="dial-core">
+              <div id="phaseIcon" class="phase-icon">🏠</div>
+              <div id="timerText" class="timer-text"></div>
+            </div>
+          </div>
+          <div class="sky-text">
+            <h2 id="phaseTitle">대기실</h2>
+            <p id="promptText" class="prompt-text"></p>
+            <div id="promptExtra" class="prompt-extra"></div>
+          </div>
+        </div>
+
+        <div id="roleCard" class="role-card hidden"></div>
+
+        <div class="players-head">
+          <h3>참가자</h3>
+          <span id="aliveCount" class="muted"></span>
+        </div>
+        <div id="players" class="players"></div>
+
+        <div id="lobbyPanel" class="panel hidden"></div>
+        <div id="endPanel" class="panel hidden"></div>
+      </section>
+
+      <aside class="chat">
+        <div class="chat-head">
+          <h3>대화</h3>
+          <span id="chatChannel" class="channel"></span>
+        </div>
+        <div id="messages" class="messages" aria-live="polite"></div>
+
+        <div id="quickBar" class="quick-bar"></div>
+        <div id="emojiPanel" class="emoji-panel hidden"></div>
+
+        <form id="chatForm" class="chat-form">
+          <button type="button" id="emojiBtn" class="icon-btn" aria-label="이모지">😀</button>
+          <input id="chatInput" maxlength="300" autocomplete="off" placeholder="메시지 입력">
+          <button type="submit" class="btn primary small">보내기</button>
+        </form>
+      </aside>
+    </main>
+  </div>
+
+  <!-- 장면 전환 배너 -->
+  <div id="banner" class="banner hidden" aria-live="assertive">
+    <div class="banner-inner">
+      <div id="bannerIcon" class="banner-icon"></div>
+      <div id="bannerTitle" class="banner-title"></div>
+      <div id="bannerSub" class="banner-sub"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="client.js"></script>
+</body>
+</html>

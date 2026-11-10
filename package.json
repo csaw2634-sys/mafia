@@ -1,0 +1,16 @@
+{
+  "name": "mafia-game",
+  "version": "1.0.0",
+  "description": "친구들과 함께하는 실시간 웹 마피아 게임 (자동 사회자)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "socket.io": "^4.8.1"
+  }
+}
