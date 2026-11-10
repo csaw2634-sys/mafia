@@ -92,6 +92,8 @@ function goHome(keepSession = false) {
   state = null;
   lastEventSeq = null;
   lastPhase = null;
+  peeking = false;
+  clearInterval(peekTimer);
   $('#game').classList.add('hidden');
   $('#home').classList.remove('hidden');
   document.body.className = 'phase-lobby';
@@ -152,8 +154,6 @@ function renderSky() {
   const s = state;
   const mine = s.me;
   const n = s.night;
-  const icons = { lobby: '🏠', reveal: '🎭', night: '🌙', day: '☀️', execution: '⚖️', ended: s.winner === 'mafia' ? '🔪' : '🎉' };
-  $('#phaseIcon').textContent = icons[s.phase] || '🌙';
 
   let title = '';
   let prompt = '';
@@ -165,7 +165,7 @@ function renderSky() {
     prompt = `친구들이 모이면 방장이 게임을 시작해요. 방 코드를 눌러 초대 링크를 복사할 수 있어요.`;
   } else if (s.phase === 'reveal') {
     title = '역할 배정';
-    prompt = '아래에서 내 역할을 확인하세요. 다른 사람에게 보여 주면 안 돼요!';
+    prompt = '참가자 칸의 내 카드에서 역할을 확인하세요. 옆 사람이 보지 않게 조심!';
   } else if (s.phase === 'night') {
     title = `${s.day}일차 밤`;
     if (!mine.alive) {
@@ -225,25 +225,57 @@ function renderSky() {
   $('#promptText').textContent = prompt;
 }
 
+const PEEK_SECONDS = 3;
+let peeking = false;
+let peekLeft = 0;
+let peekTimer = null;
+
+function teammates() {
+  // 서버는 같은 편 동료의 역할만 알려 줌 (지금은 마피아끼리만)
+  return state.players.filter((p) => p.id !== state.me.id && p.role && p.role === state.me.role);
+}
+
 function renderRoleCard() {
   const card = $('#roleCard');
-  const role = state.me.role;
-  if (!role || state.phase === 'lobby') return card.classList.add('hidden');
-  const r = ROLE[role];
-  card.className = `role-card role-${role}`;
-  card.innerHTML = '';
-  const icon = el('div', 'r-icon', r.icon);
-  const body = el('div');
-  body.append(el('div', 'r-name', `나는 ${r.name}`), el('div', 'r-desc', r.desc));
-  if (role === 'mafia') {
-    const mates = state.players.filter((p) => p.role === 'mafia' && p.id !== state.me.id).map((p) => p.name);
-    body.append(el('div', 'r-team', mates.length ? `동료: ${mates.join(', ')}` : '이번 판은 혼자 활동해요.'));
-  } else {
-    body.append(el('div', 'r-team', r.team));
+  if (!state.me.role || state.phase === 'lobby' || state.phase === 'ended') return card.classList.add('hidden');
+
+  // 누구나 같은 버튼, 같은 모양 — 겉으로는 역할을 알 수 없게
+  card.className = 'role-card' + (peeking ? ' peeking' : '');
+  const info = $('#roleInfo');
+  if (!peeking) {
+    info.textContent = `누르면 ${PEEK_SECONDS}초 동안 함께하는 동료를 확인할 수 있어요.`;
+    $('#peekLabel').textContent = '🔒 동료 확인';
+    return;
   }
-  if (!state.me.alive && state.phase !== 'ended') body.append(el('div', 'r-team', '💀 사망했어요. 이제 모든 역할이 보입니다.'));
-  card.append(icon, body);
+  if (!state.me.alive) {
+    info.textContent = '💀 관전 중이라 참가자 칸에 모든 역할이 보여요.';
+  } else {
+    const mates = teammates().map((p) => p.name);
+    info.textContent = mates.length ? `동료: ${mates.join(', ')}` : '함께하는 동료가 없어요.';
+  }
+  $('#peekLabel').textContent = `🔓 ${peekLeft}초 후 가려져요`;
 }
+
+function startPeek() {
+  peeking = true;
+  peekLeft = PEEK_SECONDS;
+  clearInterval(peekTimer);
+  peekTimer = setInterval(() => {
+    peekLeft -= 1;
+    if (peekLeft <= 0) stopPeek();
+    else if (state) renderRoleCard();
+  }, 1000);
+  if (state) { renderRoleCard(); renderPlayers(); }
+}
+
+function stopPeek() {
+  peeking = false;
+  clearInterval(peekTimer);
+  peekTimer = null;
+  if (state) { renderRoleCard(); renderPlayers(); }
+}
+
+$('#peekBtn').onclick = () => (peeking ? stopPeek() : startPeek());
 
 function canTarget(p) {
   const s = state, mine = s.me, n = s.night;
@@ -289,7 +321,10 @@ function renderPlayers() {
     const tags = el('div', 'p-tags');
     if (p.id === s.me.id) tags.append(tag('나'));
     if (p.isHost) tags.append(tag('👑 방장', 'host'));
-    if (p.role && s.phase !== 'lobby') tags.append(tag(`${ROLE[p.role].icon} ${ROLE[p.role].name}`, p.role));
+    const showRole = p.role && s.phase !== 'lobby' && (
+      s.phase === 'ended' || p.id === s.me.id ||
+      (peeking && (!s.me.alive || p.role === s.me.role)));
+    if (showRole) tags.append(tag(`${ROLE[p.role].icon} ${ROLE[p.role].name}`, p.role));
     if (!p.connected) tags.append(tag(p.left ? '🚪 나감' : '📴 끊김'));
     card.append(av, name, tags);
 
@@ -485,9 +520,8 @@ function handleBanner() {
   if (ev.seq === lastEventSeq) return;
   lastEventSeq = ev.seq;
 
-  if (s.phase === 'reveal' && s.me.role) {
-    const r = ROLE[s.me.role];
-    showBanner(r.icon, `당신은 ${r.name}입니다`, r.team);
+  if (s.phase === 'reveal') {
+    showBanner('🎭', '역할이 정해졌어요', '참가자 칸의 내 카드에서 몰래 확인하세요');
   } else {
     showBanner(ev.icon, ev.title, ev.sub);
   }
@@ -504,23 +538,23 @@ function showBanner(icon, title, sub) {
 $('#banner').onclick = () => $('#banner').classList.add('hidden');
 
 // ───── 타이머 ─────
-const RING = 339.292;
 function tick() {
   const text = $('#timerText');
-  const ring = $('#dialRing');
-  const dial = document.querySelector('.dial');
+  const fill = $('#timeFill');
   if (!state || !localDeadline) {
     text.textContent = '';
-    ring.style.strokeDashoffset = RING;
-    dial.classList.remove('urgent');
+    fill.style.width = '0';
+    text.classList.remove('urgent');
+    fill.classList.remove('urgent');
     return;
   }
   const left = Math.max(0, localDeadline - Date.now());
   const sec = Math.ceil(left / 1000);
   text.textContent = `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
-  const frac = total ? left / total : 0;
-  ring.style.strokeDashoffset = RING * (1 - frac);
-  dial.classList.toggle('urgent', sec <= 10 && ['day', 'night'].includes(state.phase));
+  fill.style.width = `${(total ? left / total : 0) * 100}%`;
+  const urgent = sec <= 10 && ['day', 'night'].includes(state.phase);
+  text.classList.toggle('urgent', urgent);
+  fill.classList.toggle('urgent', urgent);
 }
 setInterval(tick, 250);
 

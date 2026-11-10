@@ -47,24 +47,21 @@
     <main class="layout">
       <section class="board">
         <div class="sky">
-          <div class="dial">
-            <svg viewBox="0 0 120 120" aria-hidden="true">
-              <circle class="dial-track" cx="60" cy="60" r="54"></circle>
-              <circle id="dialRing" class="dial-ring" cx="60" cy="60" r="54"></circle>
-            </svg>
-            <div class="dial-core">
-              <div id="phaseIcon" class="phase-icon">🏠</div>
-              <div id="timerText" class="timer-text"></div>
-            </div>
-          </div>
-          <div class="sky-text">
+          <div class="sky-top">
             <h2 id="phaseTitle">대기실</h2>
-            <p id="promptText" class="prompt-text"></p>
-            <div id="promptExtra" class="prompt-extra"></div>
+            <div id="timerText" class="timer-text"></div>
           </div>
+          <p id="promptText" class="prompt-text"></p>
+          <div id="promptExtra" class="prompt-extra"></div>
+          <div class="time-bar"><div id="timeFill" class="time-fill"></div></div>
         </div>
 
-        <div id="roleCard" class="role-card hidden"></div>
+        <div id="roleCard" class="role-card hidden">
+          <button id="peekBtn" type="button" class="peek-btn">
+            <span id="peekLabel">🔒 동료 확인</span>
+          </button>
+          <div id="roleInfo" class="role-info"></div>
+        </div>
 
         <div class="players-head">
           <h3>참가자</h3>

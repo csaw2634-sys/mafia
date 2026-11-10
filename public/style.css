@@ -150,56 +150,60 @@ input:disabled { opacity: .5; }
 }
 .board { padding: 28px 32px 40px; overflow-y: auto; }
 
-/* 하늘: 원형 타이머 + 현재 장면 */
-.sky { display: flex; align-items: center; gap: 28px; margin-bottom: 28px; }
-.dial { position: relative; width: 132px; height: 132px; flex: none; }
-.dial svg { width: 100%; height: 100%; transform: rotate(-90deg); }
-.dial-track { fill: none; stroke: var(--ash); stroke-width: 3; }
-.dial-ring {
-  fill: none;
-  stroke: var(--accent);
-  stroke-width: 3;
-  stroke-linecap: round;
-  stroke-dasharray: 339.292;
-  stroke-dashoffset: 339.292;
-  transition: stroke-dashoffset .3s linear, stroke 1s;
-}
-.dial.urgent .dial-ring { stroke: var(--blood); }
-.dial-core {
-  position: absolute; inset: 0;
-  display: grid; place-items: center; align-content: center; gap: 2px;
-}
-.phase-icon { font-size: 34px; line-height: 1; }
-.timer-text {
-  font-family: var(--serif); font-weight: 600; font-size: 20px;
-  font-variant-numeric: tabular-nums;
-}
-.dial.urgent .timer-text { color: #ff6b61; }
-.sky-text h2 {
-  font-family: var(--serif); font-weight: 900;
-  font-size: 34px; line-height: 1.15; margin: 0 0 8px;
-}
-.prompt-text { margin: 0; color: #c9c4bb; max-width: 52ch; }
-.prompt-extra { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-
-/* 내 역할 */
-.role-card {
-  display: flex; gap: 16px; align-items: center;
-  padding: 16px 18px;
+/* 현재 장면 박스 */
+.sky {
+  padding: 22px 24px 0;
+  margin-bottom: 14px;
   border: 1px solid var(--ash);
-  border-left: 3px solid var(--role-color, var(--bone));
-  border-radius: 4px 12px 12px 4px;
+  border-radius: 14px;
+  background: var(--coal);
+  overflow: hidden;
+}
+.sky-top { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; margin-bottom: 8px; }
+.sky h2 {
+  font-family: var(--serif); font-weight: 900;
+  font-size: 34px; line-height: 1.15; margin: 0;
+}
+.timer-text {
+  font-family: var(--serif); font-weight: 600; font-size: 26px;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  flex: none;
+}
+.timer-text.urgent { color: #ff6b61; }
+.prompt-text { margin: 0; color: #c9c4bb; max-width: 60ch; }
+.prompt-extra { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.prompt-extra:empty { display: none; }
+.time-bar { height: 3px; margin: 20px -24px 0; background: var(--ash); }
+.time-fill { height: 100%; width: 0; background: var(--accent); transition: width .3s linear, background 1s; }
+.time-fill.urgent { background: var(--blood); }
+
+/* 동료 확인 — 모두에게 같은 버튼, 누르면 잠깐 보임 */
+.role-card {
+  display: flex; align-items: center; gap: 12px;
+  padding: 8px 8px 8px 14px;
+  border: 1px solid var(--ash);
+  border-radius: 10px;
   background: var(--coal);
   margin-bottom: 28px;
+  min-height: 48px;
 }
-.role-card .r-icon { font-size: 34px; }
-.role-card .r-name { font-family: var(--serif); font-weight: 900; font-size: 20px; }
-.role-card .r-desc { color: var(--smoke); font-size: 14px; }
-.role-card .r-team { color: var(--smoke); font-size: 13px; margin-top: 4px; }
-.role-mafia   { --role-color: var(--blood); }
-.role-police  { --role-color: var(--moon); }
-.role-doctor  { --role-color: var(--heal); }
-.role-citizen { --role-color: var(--lamp); }
+.peek-btn {
+  font: inherit; font-size: 13px; font-weight: 500;
+  color: var(--bone);
+  background: var(--coal-2);
+  border: 1px solid var(--ash);
+  border-radius: 8px;
+  padding: 7px 12px;
+  cursor: pointer;
+  flex: none;
+  order: 2;
+  margin-left: auto;
+}
+.peek-btn:hover { border-color: #45454f; }
+.role-info { font-size: 13.5px; color: var(--smoke); min-width: 0; }
+.role-card.peeking { border-color: #4a4a54; }
+.role-card.peeking .role-info { color: var(--bone); }
 
 /* 참가자 */
 .players-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px; }
@@ -307,7 +311,7 @@ input:disabled { opacity: .5; }
 .ch-badge { font-size: 10.5px; font-weight: 500; padding: 2px 6px; border-radius: 6px; background: var(--ash); color: var(--bone); }
 .ch-badge.mafia { background: var(--blood); }
 
-.quick-bar { display: flex; gap: 2px; padding: 8px 12px 0; flex-wrap: wrap; }
+.quick-bar { display: flex; gap: 0; padding: 8px 12px 0; flex-wrap: wrap; }
 .quick-bar button, .emoji-panel button {
   font-size: 20px; line-height: 1;
   background: none; border: 0; border-radius: 8px;
@@ -327,6 +331,7 @@ input:disabled { opacity: .5; }
   z-index: 5;
 }
 .chat-form { display: flex; gap: 8px; padding: 10px 12px 14px; }
+.chat-form .btn { flex: none; white-space: nowrap; }
 .icon-btn {
   flex: none; width: 42px;
   font-size: 20px;
@@ -365,11 +370,10 @@ input:disabled { opacity: .5; }
   .board { padding: 20px 16px 24px; overflow: visible; }
   .chat { border-left: 0; border-top: 1px solid var(--ash); height: 70vh; }
   .topbar { padding: 12px 16px; }
-  .sky { gap: 18px; }
-  .dial { width: 104px; height: 104px; }
-  .phase-icon { font-size: 26px; }
-  .timer-text { font-size: 17px; }
-  .sky-text h2 { font-size: 26px; }
+  .sky { padding: 18px 18px 0; }
+  .time-bar { margin: 16px -18px 0; }
+  .sky h2 { font-size: 26px; }
+  .timer-text { font-size: 22px; }
   .players { grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); }
 }
 
